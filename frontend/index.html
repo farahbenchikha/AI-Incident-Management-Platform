@@ -1,0 +1,430 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Cloud Operations Center — AIOps Copilot</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap');
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #0b0f17;
+            color: #e2e8f0;
+        }
+        .mono {
+            font-family: 'JetBrains Mono', monospace;
+        }
+        .glow-red {
+            box-shadow: 0 0 25px rgba(239, 68, 68, 0.25);
+        }
+        .glow-green {
+            box-shadow: 0 0 25px rgba(34, 197, 94, 0.25);
+        }
+        .glass-card {
+            background: rgba(15, 23, 42, 0.85);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+        }
+    </style>
+</head>
+<body class="min-h-screen flex flex-col">
+
+    <!-- Top Navigation Header -->
+    <header class="border-b border-slate-800 bg-slate-950/80 px-6 py-4 flex items-center justify-between sticky top-0 z-50">
+        <div class="flex items-center gap-3">
+            <div class="p-2 bg-indigo-600/20 border border-indigo-500/40 rounded-lg text-indigo-400">
+                <i data-lucide="cpu" class="w-6 h-6"></i>
+            </div>
+            <div>
+                <h1 class="text-xl font-bold tracking-tight text-white flex items-center gap-2">
+                    AI CLOUD OPERATIONS CENTER
+                    <span class="text-xs font-mono px-2 py-0.5 rounded bg-indigo-950 text-indigo-400 border border-indigo-800">K8s AIOps Copilot</span>
+                </h1>
+                <p class="text-xs text-slate-400">Autonomous Telemetry Anomaly Detection & RAG Incident Remediation Engine</p>
+            </div>
+        </div>
+
+        <div class="flex items-center gap-4">
+            <div class="flex items-center gap-2 px-3 py-1.5 rounded-full bg-slate-900 border border-slate-800 text-xs text-slate-300">
+                <span class="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse"></span>
+                <span>API Engine: <strong class="text-emerald-400" id="api-status">CONNECTED (127.0.0.1:8000)</strong></span>
+            </div>
+
+            <button onclick="injectChaos()" class="px-4 py-2 text-xs font-semibold rounded-lg bg-rose-600/20 hover:bg-rose-600/30 text-rose-400 border border-rose-500/30 flex items-center gap-2 transition-all">
+                <i data-lucide="flame" class="w-4 h-4"></i>
+                INJECT MEMORY LEAK CHAOS
+            </button>
+            <button onclick="resetCluster()" class="px-3 py-2 text-xs font-medium rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 border border-slate-700 flex items-center gap-1">
+                <i data-lucide="rotate-ccw" class="w-4 h-4"></i>
+                RESET
+            </button>
+        </div>
+    </header>
+
+    <!-- Main Content Container -->
+    <main class="flex-1 p-6 grid grid-cols-12 gap-6 max-w-7xl mx-auto w-full">
+
+        <!-- Left Column: Cluster Health Summary Card & Active Incident Banner -->
+        <div class="col-span-12 lg:col-span-5 flex flex-col gap-6">
+
+            <!-- Cluster Health Card -->
+            <div class="glass-card rounded-2xl p-6 relative overflow-hidden">
+                <div class="flex items-center justify-between mb-4">
+                    <h2 class="text-sm font-semibold uppercase tracking-wider text-slate-400 flex items-center gap-2">
+                        <i data-lucide="activity" class="w-4 h-4 text-indigo-400"></i>
+                        Cluster Health Overview
+                    </h2>
+                    <span class="text-xs text-slate-500 font-mono" id="last-updated">Live polling</span>
+                </div>
+
+                <div class="flex items-center justify-between mb-6">
+                    <div>
+                        <div class="text-5xl font-extrabold tracking-tight text-white flex items-baseline gap-1">
+                            <span id="health-score">94</span><span class="text-2xl font-bold text-slate-400">%</span>
+                        </div>
+                        <p class="text-xs text-slate-400 mt-1">Overall Kubernetes Cluster Operational Score</p>
+                    </div>
+                    <div class="w-20 h-20 rounded-full border-4 border-slate-800 flex items-center justify-center p-2 relative">
+                        <svg class="w-full h-full transform -rotate-90" viewBox="0 0 36 36">
+                            <path class="text-slate-800" stroke-width="3.5" stroke="currentColor" fill="none" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
+                            <path id="health-ring" class="text-emerald-500 transition-all duration-700" stroke-dasharray="94, 100" stroke-width="3.5" stroke-linecap="round" stroke="currentColor" fill="none" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
+                        </svg>
+                    </div>
+                </div>
+
+                <!-- Stats Grid -->
+                <div class="grid grid-cols-4 gap-3 text-center pt-4 border-t border-slate-800/80">
+                    <div class="p-2 rounded-xl bg-slate-900/60 border border-slate-800">
+                        <div class="text-xs text-slate-400">Apps</div>
+                        <div class="text-lg font-bold text-white mt-0.5" id="stat-apps">23</div>
+                    </div>
+                    <div class="p-2 rounded-xl bg-emerald-950/40 border border-emerald-800/40">
+                        <div class="text-xs text-emerald-400">Healthy</div>
+                        <div class="text-lg font-bold text-emerald-300 mt-0.5" id="stat-healthy">21</div>
+                    </div>
+                    <div class="p-2 rounded-xl bg-amber-950/40 border border-amber-800/40">
+                        <div class="text-xs text-amber-400">Warning</div>
+                        <div class="text-lg font-bold text-amber-300 mt-0.5" id="stat-warning">1</div>
+                    </div>
+                    <div class="p-2 rounded-xl bg-rose-950/40 border border-rose-800/40">
+                        <div class="text-xs text-rose-400">Critical</div>
+                        <div class="text-lg font-bold text-rose-300 mt-0.5" id="stat-critical">1</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Active Incident Card -->
+            <div id="incident-card" class="glass-card rounded-2xl p-6 border-rose-500/40 glow-red transition-all">
+                <div class="flex items-center justify-between mb-4">
+                    <div class="flex items-center gap-2">
+                        <span class="p-2 bg-rose-500/20 text-rose-400 rounded-lg animate-pulse">
+                            <i data-lucide="alert-triangle" class="w-5 h-5"></i>
+                        </span>
+                        <div>
+                            <h3 class="text-xs font-bold uppercase tracking-wider text-rose-400">INCIDENT DETECTED</h3>
+                            <h2 class="text-lg font-bold text-white mono" id="incident-service">payment-api</h2>
+                        </div>
+                    </div>
+                    <span class="px-2.5 py-1 rounded-full bg-rose-950 text-rose-400 border border-rose-800 text-xs font-bold uppercase" id="incident-severity">CRITICAL</span>
+                </div>
+
+                <div class="space-y-3 bg-slate-950/60 p-4 rounded-xl border border-slate-800 text-sm">
+                    <div class="flex justify-between items-center">
+                        <span class="text-slate-400">Probable root cause:</span>
+                        <span class="font-semibold text-rose-300" id="incident-cause">Memory leak</span>
+                    </div>
+                    <div class="flex justify-between items-center">
+                        <span class="text-slate-400">AI Confidence:</span>
+                        <span class="font-mono font-bold text-indigo-400" id="incident-confidence">91%</span>
+                    </div>
+                    <div class="flex justify-between items-start pt-2 border-t border-slate-800/60">
+                        <span class="text-slate-400">Recommended action:</span>
+                        <span class="font-medium text-amber-300 text-right max-w-[200px]" id="incident-action">Increase memory limit to 512Mi</span>
+                    </div>
+                </div>
+
+                <!-- Action Buttons -->
+                <div class="grid grid-cols-2 gap-3 mt-5">
+                    <button onclick="openInvestigateModal()" class="py-2.5 px-4 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-semibold text-xs tracking-wider uppercase flex items-center justify-center gap-2 transition-all">
+                        <i data-lucide="search" class="w-4 h-4"></i>
+                        INVESTIGATE
+                    </button>
+                    <button onclick="triggerRemediation()" class="py-2.5 px-4 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-semibold text-xs tracking-wider uppercase flex items-center justify-center gap-2 transition-all">
+                        <i data-lucide="shield-check" class="w-4 h-4"></i>
+                        REMEDIATE
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Right Column: Real-time Telemetry Gauges & Live Logs Stream -->
+        <div class="col-span-12 lg:col-span-7 flex flex-col gap-6">
+
+            <!-- Metrics Telemetry Grid -->
+            <div class="glass-card rounded-2xl p-6">
+                <h2 class="text-sm font-semibold uppercase tracking-wider text-slate-400 mb-4 flex items-center gap-2">
+                    <i data-lucide="bar-chart-3" class="w-4 h-4 text-indigo-400"></i>
+                    Target Telemetry Metrics (<span class="text-indigo-400 font-mono" id="metrics-service-name">payment-api</span>)
+                </h2>
+
+                <div class="grid grid-cols-2 sm:grid-cols-4 gap-4">
+                    <!-- CPU -->
+                    <div class="p-4 rounded-xl bg-slate-900/80 border border-slate-800">
+                        <div class="text-xs text-slate-400 mb-1">CPU Usage</div>
+                        <div class="text-2xl font-bold font-mono text-rose-400" id="metric-cpu">97%</div>
+                        <div class="w-full bg-slate-800 rounded-full h-1.5 mt-2">
+                            <div class="bg-rose-500 h-1.5 rounded-full" style="width: 97%" id="bar-cpu"></div>
+                        </div>
+                    </div>
+                    <!-- Memory -->
+                    <div class="p-4 rounded-xl bg-slate-900/80 border border-slate-800">
+                        <div class="text-xs text-slate-400 mb-1">Memory Usage</div>
+                        <div class="text-2xl font-bold font-mono text-rose-400" id="metric-mem">94%</div>
+                        <div class="w-full bg-slate-800 rounded-full h-1.5 mt-2">
+                            <div class="bg-rose-500 h-1.5 rounded-full" style="width: 94%" id="bar-mem"></div>
+                        </div>
+                    </div>
+                    <!-- Pod Replicas -->
+                    <div class="p-4 rounded-xl bg-slate-900/80 border border-slate-800">
+                        <div class="text-xs text-slate-400 mb-1">Active Pods</div>
+                        <div class="text-2xl font-bold font-mono text-amber-400" id="metric-pods">3 → 7 → 12</div>
+                        <div class="text-[10px] text-amber-500/80 mt-1">Auto-scaling spike</div>
+                    </div>
+                    <!-- Latency & Error -->
+                    <div class="p-4 rounded-xl bg-slate-900/80 border border-slate-800">
+                        <div class="text-xs text-slate-400 mb-1">Latency / Errors</div>
+                        <div class="text-lg font-bold font-mono text-rose-400" id="metric-lat">2.8s</div>
+                        <div class="text-xs text-rose-400 font-mono font-semibold" id="metric-err">Errors: 18%</div>
+                    </div>
+                </div>
+
+                <!-- Live Chart -->
+                <div class="mt-6 pt-4 border-t border-slate-800">
+                    <canvas id="telemetryChart" height="110"></canvas>
+                </div>
+            </div>
+
+            <!-- Terminal Logs Stream -->
+            <div class="glass-card rounded-2xl p-6 flex flex-col flex-1">
+                <div class="flex items-center justify-between mb-3">
+                    <h2 class="text-sm font-semibold uppercase tracking-wider text-slate-400 flex items-center gap-2">
+                        <i data-lucide="terminal" class="w-4 h-4 text-emerald-400"></i>
+                        Loki Container Logs & K8s Events
+                    </h2>
+                    <span class="text-xs font-mono text-slate-500">kubectl logs payment-api --tail=50</span>
+                </div>
+
+                <div class="bg-slate-950 rounded-xl p-4 font-mono text-xs text-slate-300 space-y-2 overflow-y-auto max-h-52 border border-slate-800" id="logs-container">
+                    <div class="text-slate-500">[00:23:40] [INFO] Service payment-api initialized on port 8080</div>
+                    <div class="text-amber-400">[00:23:42] [WARN] Memory consumption elevated: 241MB / 256MB allocated heap</div>
+                    <div class="text-rose-400">[00:23:45] [ERROR] java.lang.OutOfMemoryError: Java heap space</div>
+                    <div class="text-rose-500 font-bold">[00:23:46] [CRITICAL] Pod payment-api-7d9bf-x8k92 terminated (OOMKilled)</div>
+                </div>
+            </div>
+
+        </div>
+    </main>
+
+    <!-- Modal for Investigation (Chain of Thought SRE Reasoning) -->
+    <div id="investigate-modal" class="fixed inset-0 bg-slate-950/80 backdrop-blur-md hidden z-50 flex items-center justify-center p-4">
+        <div class="glass-card rounded-2xl max-w-2xl w-full p-6 border-indigo-500/40 shadow-2xl">
+            <div class="flex items-center justify-between border-b border-slate-800 pb-4 mb-4">
+                <div class="flex items-center gap-3">
+                    <span class="p-2 bg-indigo-600/20 text-indigo-400 rounded-lg">
+                        <i data-lucide="bot" class="w-6 h-6"></i>
+                    </span>
+                    <div>
+                        <h3 class="text-base font-bold text-white">Agentic LLM SRE Copilot Investigation</h3>
+                        <p class="text-xs text-slate-400">Chain-of-Thought reasoning & RAG Runbook cross-validation</p>
+                    </div>
+                </div>
+                <button onclick="closeInvestigateModal()" class="text-slate-400 hover:text-white p-1">
+                    <i data-lucide="x" class="w-5 h-5"></i>
+                </button>
+            </div>
+
+            <div class="space-y-4 my-4 max-h-[60vh] overflow-y-auto pr-2" id="cot-steps-container">
+                <!-- Dynamically populated CoT steps -->
+            </div>
+
+            <div class="flex justify-between items-center border-t border-slate-800 pt-4">
+                <div class="text-xs text-slate-400">RAG Source: <span class="text-indigo-300 font-mono">runbook_memory_leak.md</span></div>
+                <button onclick="triggerRemediation(); closeInvestigateModal();" class="px-5 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs uppercase flex items-center gap-2">
+                    <i data-lucide="check-circle-2" class="w-4 h-4"></i>
+                    APPROVE & REMEDIATE
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Application Script -->
+    <script>
+        lucide.createIcons();
+
+        const API_URL = 'http://127.0.0.1:8000';
+        let telemetryChart = null;
+
+        // Initialize Telemetry Chart
+        function initChart() {
+            const ctx = document.getElementById('telemetryChart').getContext('2d');
+            telemetryChart = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: ['-30s', '-25s', '-20s', '-15s', '-10s', '-5s', 'Now'],
+                    datasets: [
+                        {
+                            label: 'CPU Usage (%)',
+                            data: [20, 22, 45, 65, 88, 95, 97],
+                            borderColor: '#ef4444',
+                            backgroundColor: 'rgba(239, 68, 68, 0.1)',
+                            fill: true,
+                            tension: 0.4
+                        },
+                        {
+                            label: 'Memory Usage (%)',
+                            data: [35, 38, 50, 70, 85, 92, 94],
+                            borderColor: '#f59e0b',
+                            backgroundColor: 'rgba(245, 158, 11, 0.1)',
+                            fill: true,
+                            tension: 0.4
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    plugins: { legend: { labels: { color: '#94a3b8', font: { size: 11 } } } },
+                    scales: {
+                        x: { ticks: { color: '#64748b' }, grid: { color: 'rgba(255,255,255,0.05)' } },
+                        y: { ticks: { color: '#64748b' }, grid: { color: 'rgba(255,255,255,0.05)' }, max: 100 }
+                    }
+                }
+            });
+        }
+
+        async function fetchClusterState() {
+            try {
+                // Fetch Health
+                const healthRes = await fetch(`${API_URL}/api/cluster/health`);
+                const healthData = await healthRes.json();
+                
+                document.getElementById('health-score').innerText = Math.round(healthData.cluster_health_pct);
+                document.getElementById('stat-apps').innerText = healthData.total_applications;
+                document.getElementById('stat-healthy').innerText = healthData.healthy_count;
+                document.getElementById('stat-warning').innerText = healthData.warning_count;
+                document.getElementById('stat-critical').innerText = healthData.critical_count;
+                document.getElementById('health-ring').setAttribute('stroke-dasharray', `${healthData.cluster_health_pct}, 100`);
+
+                // Fetch Incidents
+                const incRes = await fetch(`${API_URL}/api/incidents/active`);
+                const incData = await incRes.json();
+
+                if (incData.detected && incData.incident) {
+                    const inc = incData.incident;
+                    document.getElementById('incident-service').innerText = inc.primary_service;
+                    document.getElementById('incident-severity').innerText = inc.severity;
+                    document.getElementById('incident-cause').innerText = inc.probable_root_cause;
+                    document.getElementById('incident-confidence').innerText = `${inc.confidence_pct}%`;
+                    document.getElementById('incident-action').innerText = inc.recommended_action;
+
+                    document.getElementById('metrics-service-name').innerText = inc.primary_service;
+                    document.getElementById('metric-cpu').innerText = `${inc.telemetry_snapshot.cpu_pct}%`;
+                    document.getElementById('metric-mem').innerText = `${inc.telemetry_snapshot.memory_pct}%`;
+                    document.getElementById('metric-lat').innerText = `${inc.telemetry_snapshot.latency_ms}ms`;
+                    document.getElementById('metric-err').innerText = `Errors: ${inc.telemetry_snapshot.error_rate_pct}%`;
+
+                    document.getElementById('bar-cpu').style.width = `${inc.telemetry_snapshot.cpu_pct}%`;
+                    document.getElementById('bar-mem').style.width = `${inc.telemetry_snapshot.memory_pct}%`;
+                } else {
+                    document.getElementById('incident-service').innerText = "All Systems Operational";
+                    document.getElementById('incident-severity').innerText = "HEALTHY";
+                    document.getElementById('incident-severity').className = "px-2.5 py-1 rounded-full bg-emerald-950 text-emerald-400 border border-emerald-800 text-xs font-bold uppercase";
+                    document.getElementById('incident-cause').innerText = "None";
+                    document.getElementById('incident-confidence').innerText = "100%";
+                    document.getElementById('incident-action').innerText = "No action required";
+
+                    document.getElementById('metric-cpu').innerText = `15%`;
+                    document.getElementById('metric-mem').innerText = `32%`;
+                    document.getElementById('metric-pods').innerText = `3 Replicas`;
+                    document.getElementById('metric-lat').innerText = `45ms`;
+                    document.getElementById('metric-err').innerText = `Errors: 0%`;
+                    document.getElementById('bar-cpu').style.width = `15%`;
+                    document.getElementById('bar-mem').style.width = `32%`;
+                }
+
+                document.getElementById('last-updated').innerText = new Date().toLocaleTimeString();
+            } catch (err) {
+                console.error("API Fetch Error:", err);
+                document.getElementById('api-status').innerText = 'DISCONNECTED';
+                document.getElementById('api-status').className = 'text-rose-400';
+            }
+        }
+
+        async function injectChaos() {
+            await fetch(`${API_URL}/api/chaos/inject`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ service_name: 'payment-api', chaos_type: 'MEMORY_LEAK' })
+            });
+            fetchClusterState();
+        }
+
+        async function resetCluster() {
+            await fetch(`${API_URL}/api/chaos/reset`, { method: 'POST' });
+            fetchClusterState();
+        }
+
+        async function openInvestigateModal() {
+            document.getElementById('investigate-modal').classList.remove('hidden');
+            const container = document.getElementById('cot-steps-container');
+            container.innerHTML = '<div class="text-indigo-400 font-mono text-sm py-4">Running Agentic SRE Copilot Investigation...</div>';
+
+            const res = await fetch(`${API_URL}/api/incidents/investigate`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ service_name: 'payment-api' })
+            });
+            const data = await res.json();
+
+            container.innerHTML = '';
+            data.chain_of_thought.forEach(s => {
+                const stepEl = document.createElement('div');
+                stepEl.className = 'p-3.5 rounded-xl bg-slate-900 border border-slate-800 space-y-1';
+                stepEl.innerHTML = `
+                    <div class="flex items-center gap-2 text-xs font-bold text-indigo-400">
+                        <span class="w-5 h-5 rounded-full bg-indigo-950 border border-indigo-700 flex items-center justify-center text-[10px] text-indigo-300">${s.step}</span>
+                        ${s.title}
+                    </div>
+                    <p class="text-xs text-slate-300 leading-relaxed pl-7">${s.detail}</p>
+                `;
+                container.appendChild(stepEl);
+            });
+        }
+
+        function closeInvestigateModal() {
+            document.getElementById('investigate-modal').classList.add('hidden');
+        }
+
+        async function triggerRemediation() {
+            const res = await fetch(`${API_URL}/api/incidents/remediate`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ service_name: 'payment-api', memory_limit: '512Mi' })
+            });
+            const data = await res.json();
+            alert(`Remediation Executed!\n${data.message}`);
+            fetchClusterState();
+        }
+
+        // Init
+        initChart();
+        fetchClusterState();
+        setInterval(fetchClusterState, 3000);
+    </script>
+</body>
+</html>
