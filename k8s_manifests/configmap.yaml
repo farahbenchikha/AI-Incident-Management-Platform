@@ -1,0 +1,11 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: aiops-copilot-config
+  namespace: default
+data:
+  APP_ENV: "production"
+  LOG_LEVEL: "INFO"
+  PROMETHEUS_ENDPOINT: "http://prometheus-k8s.monitoring.svc.cluster.local:9090"
+  LOKI_ENDPOINT: "http://loki-stack.monitoring.svc.cluster.local:3100"
+  CHROMA_DB_PATH: "/app/rag_docs/chroma_db"

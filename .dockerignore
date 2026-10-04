@@ -1,0 +1,14 @@
+backend/venv/
+venv/
+ENV/
+env/
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.git
+.gitignore
+.idea
+.vscode
+scratch/
+.system_generated/
